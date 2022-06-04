@@ -17,9 +17,10 @@ class Analysis {
         bool Readable;
         bool Writeable;
         bool Executable;
-        time_t AccessedLast;
-        time_t ModifiedLast;
-        time_t ChangedLast;
-        time_t BirthDate;
+        timespec AccessedLast;
+        timespec ModifiedLast;
+        timespec ChangedLast;
+        uid_t OnwerId;
+        gid_t GroupId;
         map<string,string> InodeTableData;
 };
