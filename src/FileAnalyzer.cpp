@@ -123,7 +123,7 @@ char* FormatNumbertoDateNumber(uint8_t Number) {
     } else if ((Number-3)%10==0) {
         strcat(StrNum,"rd");
     } else {
-        strcat(StrNum,"st");
+        strcat(StrNum,"th");
     }
     return StrNum;
 }
