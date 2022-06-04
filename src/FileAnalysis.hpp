@@ -1,6 +1,5 @@
-#include <cstddef>
-#include <cstdbool>
-#include <ctime>
+#include <stdbool.h>
+#include <time.h>
 #include <string>
 #include <map>
 using namespace std;
