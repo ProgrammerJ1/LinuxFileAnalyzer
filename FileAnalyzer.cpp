@@ -2,9 +2,12 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pwd.h>
+#include <cstring>
+#include <cstdint>
 #include "FileAnalysis.hpp"
 #include "RegFileAnalysis.hpp"
+#include "MonthTable.hpp"
+#include <WeekTable.hpp>
 int main(int argc,char** argv) {
     if (argc==1) {
         perror("Error: No file to analyze");
@@ -50,8 +53,44 @@ int Program(char* File,bool GUI) {
             fread(FileContents,analysisoffile.bytes,sizeof(uint8_t),fp);
             fclose(fp);
             printf("Filename: %s\n",analysisoffile.filename);
-            printf("Amount of Bytes: %s\n",analysisoffile.bytes);
-            printf("Amount of Blocks: %s\n",analysisoffile.blocks);
+            printf("Amount of Bytes: %u\n",analysisoffile.bytes);
+            printf("Amount of Blocks: %u\n",analysisoffile.blocks);
+            printf("Block Size: %u\n",analysisoffile.blocksize);
+            printf("%s","File Type: Regular\n");
+            printf("Device Id: 0x%X\n",analysisoffile.DeviceNumber);
+            printf("Inode Number: %u",analysisoffile.inodenumber);
+            printf("Amount of Hard Links: %u",analysisoffile.NumberofHardLinks);
+            printf("%s","Permissions: ");
+            uint8_t AmountofPerms=0;
+            if (analysisoffile.Readable) {
+                printf("%s","Readable");
+                AmountofPerms+=1;
+            } else if (analysisoffile.Writeable) {
+                if (AmountofPerms>1) {
+                    printf("%s",", Writable");
+                } else {
+                    printf("%s","Writeable");
+                    AmountofPerms+=1;
+                }
+            } else if (analysisoffile.Executable) {
+                if (AmountofPerms>1) {
+                    printf("%s",", Executable");
+                } else {
+                    printf("Executable");
+                }
+            }
+            AmountofPerms=NULL;
+            printf("%c",'\n');
+            struct tm TrueAccessTime;
+            localtime_r(&analysisoffile.AccessedLast.tv_sec,&TrueAccessTime);
+            printf("Last time accessed: %s, %s %s, %u %u:%u:%u %s",getWeekTable().find(TrueAccessTime.tm_wday)->second,getMonthTable().find(TrueAccessTime.tm_mon),FormatNumbertoDateNumber(TrueAccessTime.tm_mday),TrueAccessTime.tm_year+1900,TrueAccessTime.tm_hour,TrueAccessTime.tm_min,TrueAccessTime.tm_sec,TrueAccessTime.tm_zone);
+            struct tm TrueModifiyTime;
+            localtime_r(&analysisoffile.ModifiedLast.tv_sec,&TrueModifiyTime);
+            printf("Last time modified: %s, %s %s, %u %u:%u:%u %s",getWeekTable().find(TrueModifiyTime.tm_wday)->second,getMonthTable().find(TrueModifiyTime.tm_mon),FormatNumbertoDateNumber(TrueModifiyTime.tm_mday),TrueModifiyTime.tm_year+1900,TrueModifiyTime.tm_hour,TrueModifiyTime.tm_min,TrueModifiyTime.tm_sec,TrueModifiyTime.tm_zone);
+            struct tm TrueChangeTime;
+            localtime_r(&analysisoffile.ChangedLast.tv_sec,&TrueChangeTime);
+            printf("Last time changed: %s, %s %s, %u %u:%u:%u %s",getWeekTable().find(TrueChangeTime.tm_wday)->second,getMonthTable().find(TrueChangeTime.tm_mon),FormatNumbertoDateNumber(TrueChangeTime.tm_mday),TrueChangeTime.tm_year+1900,TrueChangeTime.tm_hour,TrueChangeTime.tm_min,TrueChangeTime.tm_sec,TrueChangeTime.tm_zone);
+            struct tm TrueModifiyTime;
         }
     } else {
         perror("Error: File not accessible");
@@ -74,4 +113,18 @@ char FindFileType(mode_t FileStatMode) {
     } else {
         return 6;
     }
+}
+char* FormatNumbertoDateNumber(uint8_t Number) {
+    char* StrNum;
+    sprintf(StrNum,"%u",(short)Number);
+    if ((Number-1)%10==0) {
+        strcat(StrNum,"st");
+    } else if ((Number-2)%10==0) {
+        strcat(StrNum,"nd");
+    } else if ((Number-3)%10==0) {
+        strcat(StrNum,"rd");
+    } else {
+        strcat(StrNum,"st");
+    }
+    return StrNum;
 }
