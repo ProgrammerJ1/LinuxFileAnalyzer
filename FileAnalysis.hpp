@@ -11,9 +11,9 @@ class Analysis {
         size_t blocks;
         size_t blocksize;
         char filetype;
-        short int DeviceNumber;
-        int inodenumber;
-        short int NumberofHardLinks;
+        unsigned long DeviceNumber;
+        unsigned long inodenumber;
+        unsigned long NumberofHardLinks;
         bool Readable;
         bool Writeable;
         bool Executable;
