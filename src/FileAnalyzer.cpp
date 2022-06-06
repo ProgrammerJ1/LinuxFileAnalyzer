@@ -12,23 +12,39 @@
 #include <sys/types.h>
 #include <linux/fs.h>
 #include <sys/ioctl.h>
-int main(int argc,char** argv) {
-    if (argc==1) {
-        perror("Error: No file to analyze");
+#include <regex>
+#include <sstream>
+using namespace std;
+char FindFileType(mode_t FileStatMode) {
+    if (S_ISREG(FileStatMode)) {
+        return 0;
+    } else if (S_ISDIR(FileStatMode)) {
         return 1;
-    } else if (argc==2) {
-        if (argv[1]=="-h"||argv[1]=="--help") {
-            printf("%s","Usage: <flag?> <file>\n -h|--help Display this information and then exit\n -v|--version Display the version number\n-g|--gui Display this information as a gui");
-            return 0;
-        } else if (argv[1]=="-v"||argv[1]=="--version") {
-            printf("%s","GNU FileAnalyzer 1.0.0");
-            return 0;
-        } else {
-            return Program(argv[1],false);
-        }
+    } else if (S_ISBLK(FileStatMode)) {
+        return 2;
+    } else if (S_ISCHR(FileStatMode)) {
+        return 3;
+    } else if (S_ISFIFO(FileStatMode)) {
+        return 4;
+    } else if (S_ISLNK(FileStatMode)) {
+        return 5;
     } else {
-        perror("Error: Can only analyze one file");
+        return 6;
     }
+}
+char* FormatNumbertoDateNumber(uint8_t Number) {
+    char* StrNum;
+    sprintf(StrNum,"%u",(short)Number);
+    if ((Number-1)%10==0) {
+        strcat(StrNum,"st");
+    } else if ((Number-2)%10==0) {
+        strcat(StrNum,"nd");
+    } else if ((Number-3)%10==0) {
+        strcat(StrNum,"rd");
+    } else {
+        strcat(StrNum,"th");
+    }
+    return StrNum;
 }
 int Program(char* File,bool GUI) {
     if (access((const char*)File,F_OK)) {
@@ -105,10 +121,9 @@ int Program(char* File,bool GUI) {
             struct tm TrueChangeTime;
             localtime_r(&analysisoffile.ChangedLast.tv_sec,&TrueChangeTime);
             printf("Last time changed: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueChangeTime.tm_wday)->second,getMonthTable().find(TrueChangeTime.tm_mon),FormatNumbertoDateNumber(TrueChangeTime.tm_mday),TrueChangeTime.tm_year+1900,TrueChangeTime.tm_hour,TrueChangeTime.tm_min,TrueChangeTime.tm_sec,TrueChangeTime.tm_zone);
-            struct tm TrueModifiyTime;
-            printf("%s","Would you like to print file type specific information? [Y/n]");
             printf("Group Id Owner: %u",analysisoffile.GroupId);
             printf("Owner ID: %u",analysisoffile.OnwerId);
+            printf("%s","Would you like to print file type specific information? [Y/n]");
             char Choice=getchar();
             bool SpecialInfo;
             switch (Choice) {
@@ -148,17 +163,58 @@ int Program(char* File,bool GUI) {
                             closedir(d);
                       }
                     case 2:
-                        struct stat BlockDeviceStats;
-                        stat(File,&BlockDeviceStats);
-                        dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
-                        printf("Block Device Name: %s",bdevname(BlockDeviceId));
-                        printf("Block Device Major Number: %u",major(BlockDeviceId));
-                        printf("Block Device Minor Number: %u",minor(BlockDeviceId));
-                        size_t SizeofBlockDev;
-                        FILE* fp=fopen(File,"r");
-                        ioctl(fileno(fp),BLKGETSIZE64,&SizeofBlockDev);
-                        printf("Size of Block Device: %u",SizeofBlockDev);
-                        iotck
+                      {
+                            struct stat BlockDeviceStats;
+                            stat(File,&BlockDeviceStats);
+                            dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
+                            char* BlockDevName=bdevname(BlockDeviceId)
+                            printf("Block Device Name: %s",BlockDevName);
+                            printf("Block Device Major Number: %u",major(BlockDeviceId));
+                            printf("Block Device Minor Number: %u",minor(BlockDeviceId));
+                            size_t SizeofBlockDev;
+                            FILE* fp=fopen(File,"r");
+                            ioctl(fileno(fp),BLKGETSIZE64,&SizeofBlockDev);
+                            printf("Size of Block Device: %u",SizeofBlockDev);
+                            char* BlockDeviceReadOnlyInfoFilePath="/sys/class/block";
+                            strcat(BlockDeviceReadOnlyInfoFilePath,BlockDevName);
+                            strcat(BlockDeviceReadOnlyInfoFilePath,"/ro");
+                            FILE* BlockDeviceReadOnlyInfoFile=fopen(BlockDeviceReadOnlyInfoFilePath,"r");
+                            char* BlockDeviceReadOnlyNumber;
+                            fread(BlockDeviceReadOnlyNumber,sizeof(char),1,BlockDeviceReadOnlyInfoFile);
+                            if (BlockDeviceReadOnlyNumber=="0") {
+                              printf("%s","Block Device Read Only: No");
+                            } else {
+                              printf("%s","Block Device Read Only: Yes");
+                            }
+                            regex BlockDevicePartationCheckerRegex=regex("\\w+\\d+");
+                            if(regex_match(string(BlockDevName),regex("loop\\d+"))) {
+                              printf("Block Device Type: Loop");
+                            } else if (regex_match(string(BlockDevName),BlockDevicePartationCheckerRegex)) {
+                              printf("Block Device Type: Partition");
+                            } else {
+                              printf("Block Device Type: Disk");
+                            }
+                            struct stat MountsListStats;
+                            stat("/proc/mounts",&MountsListStats);
+                            FILE* MountListFile=fopen("/proc/mounts","r");
+                            char* MountList;fread(MountList,sizeof(char),MountsListStats.st_size,MountListFile);
+                            size_t AmountofLines;
+                            for (int i=0;MountList[i]!='\0';i++) {
+                              if (MountList[i]=='\n') {
+                                AmountofLines++;
+                              }
+                            }
+                            istringstream MountListStream{string(MountList)};
+                            FindMount:for (size_t i=0;i<AmountofLines||;i++) {
+                              string MountEntry;
+                              size_t MountEntryLength;
+                              getline(MountListStream,MountEntry);
+                              MountEntryLength=MountEntry.size();
+                              if (regex_match(string(MountEntry),regex(BlockDevName))) {
+                                ;
+                              }
+                            }
+                      }
                 }
             }
             return 0;
@@ -168,34 +224,21 @@ int Program(char* File,bool GUI) {
         return 1;
     }
 };
-char FindFileType(mode_t FileStatMode) {
-    if (S_ISREG(FileStatMode)) {
-        return 0;
-    } else if (S_ISDIR(FileStatMode)) {
+int main(int argc,char** argv) {
+    if (argc==1) {
+        perror("Error: No file to analyze");
         return 1;
-    } else if (S_ISBLK(FileStatMode)) {
-        return 2;
-    } else if (S_ISCHR(FileStatMode)) {
-        return 3;
-    } else if (S_ISFIFO(FileStatMode)) {
-        return 4;
-    } else if (S_ISLNK(FileStatMode)) {
-        return 5;
+    } else if (argc==2) {
+        if (argv[1]=="-h"||argv[1]=="--help") {
+            printf("%s","Usage: <flag?> <file>\n -h|--help Display this information and then exit\n -v|--version Display the version number\n-g|--gui Display this information as a gui");
+            return 0;
+        } else if (argv[1]=="-v"||argv[1]=="--version") {
+            printf("%s","GNU FileAnalyzer 1.0.0");
+            return 0;
+        } else {
+            return Program(argv[1],false);
+        }
     } else {
-        return 6;
+        perror("Error: Can only analyze one file");
     }
-}
-char* FormatNumbertoDateNumber(uint8_t Number) {
-    char* StrNum;
-    sprintf(StrNum,"%u",(short)Number);
-    if ((Number-1)%10==0) {
-        strcat(StrNum,"st");
-    } else if ((Number-2)%10==0) {
-        strcat(StrNum,"nd");
-    } else if ((Number-3)%10==0) {
-        strcat(StrNum,"rd");
-    } else {
-        strcat(StrNum,"th");
-    }
-    return StrNum;
 }
