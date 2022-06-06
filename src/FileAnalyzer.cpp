@@ -6,9 +6,12 @@
 #include <cstdint>
 #include "FileAnalysis.hpp"
 #include "MonthTable.hpp"
-#include <WeekTable.hpp>
+#include "WeekTable.hpp"
 #include <dirent.h>
 #include <libgen.h>
+#include <sys/types.h>
+#include <linux/fs.h>
+#include <sys/ioctl.h>
 int main(int argc,char** argv) {
     if (argc==1) {
         perror("Error: No file to analyze");
@@ -117,31 +120,45 @@ int Program(char* File,bool GUI) {
             if (SpecialInfo) {
                 switch (analysisoffile.filetype) {
                     case 0:
-                        uint8_t* Contents;
-                        FILE* fp=fopen(File,"rb");
-                        fread(Contents,1,FileStat.st_size,fp);
-                        fclose(fp);
-                        printf("%s","File Contents: ");
-                        for (size_t i=0;i<sizeof(Contents);i++) {
-                            printf("%X",Contents[i]);
-                            if (i+1!=sizeof(Contents)) {
-                                printf("%c",' ');
+                      {
+                            uint8_t* Contents;
+                            FILE* fp=fopen(File,"rb");
+                            fread(Contents,1,FileStat.st_size,fp);
+                            fclose(fp);
+                            printf("%s","File Contents: ");
+                            for (size_t i=0;i<sizeof(Contents);i++) {
+                                printf("%X",Contents[i]);
+                                if (i+1!=sizeof(Contents)) {
+                                    printf("%c",' ');
+                                }
                             }
-                        }
-                        return 0;
+                            break;
+                      }
                     case 1:
-                        printf("%s","Directory Contents\n________________");
-                        DIR *d;
-                        struct dirent *dir;
-                        d=opendir(File);
-                        if (d) {
-                            while ((dir = readdir(d)) != NULL) {
-                                printf("%s",dir->d_name);
+                      {
+                            printf("%s","Directory Contents\n________________");
+                            DIR *d;
+                            struct dirent *dir;
+                            d=opendir(File);
+                            if (d) {
+                                while ((dir = readdir(d)) != NULL) {
+                                    printf("%s",dir->d_name);
+                                }
                             }
-                        }
-                        closedir(d);
+                            closedir(d);
+                      }
                     case 2:
-                        if
+                        struct stat BlockDeviceStats;
+                        stat(File,&BlockDeviceStats);
+                        dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
+                        printf("Block Device Name: %s",bdevname(BlockDeviceId));
+                        printf("Block Device Major Number: %u",major(BlockDeviceId));
+                        printf("Block Device Minor Number: %u",minor(BlockDeviceId));
+                        size_t SizeofBlockDev;
+                        FILE* fp=fopen(File,"r");
+                        ioctl(fileno(fp),BLKGETSIZE64,&SizeofBlockDev);
+                        printf("Size of Block Device: %u",SizeofBlockDev);
+                        iotck
                 }
             }
             return 0;
