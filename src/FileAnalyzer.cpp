@@ -173,8 +173,10 @@ int Program(char* File,bool GUI) {
                             printf("Block Device Name: %s",BlockDevName);
                             printf("Block Device Major Number: %u",MAJOR(BlockDeviceId));
                             printf("Block Device Minor Number: %u",MINOR(BlockDeviceId));
-                            char* BlockDevRemovableFlagFilePath="/sys/block/";
-                            strcat(BlockDevRemovableFlagFilePath,BlockDevName);
+                            char* BlockDevInfoPath="/sys/block/";
+                            strcat(BlockDevInfoPath,BlockDevName);
+                            char* BlockDevRemovableFlagFilePath;
+                            memcpy(BlockDevRemovableFlagFilePath,BlockDevInfoPath,sizeof(BlockDevInfoPath));
                             strcat(BlockDevRemovableFlagFilePath,"/removeable");
                             char BlockDevRemovableFlag;
                             FILE* BlockDevRemovableFlagFile=fopen(BlockDevRemovableFlagFilePath,"r");
@@ -184,8 +186,18 @@ int Program(char* File,bool GUI) {
                             } else {
                                 printf("%s","Block Device Removable: Yes");
                             }
+                            fclose(BlockDevRemovableFlagFile);
                             blkid_loff_t BlockDevRemovableSize=blkid_get_dev_size(fileno(BlockDevRemovableFlagFile));
                             printf("Block Device Size: %u",BlockDevRemovableSize);
+                            char* BlockDevTypeFlagFilePath;
+                            memcpy(BlockDevTypeFlagFilePath,BlockDevInfoPath,sizeof(BlockDevInfoPath));
+                            FILE* BlockDevTypeFlagFile=fopen(BlockDevTypeFlagFilePath,"rb");
+                            uint8_t BlockDevTypeFlag;
+                            fread(&BlockDevTypeFlag,sizeof(char),1,BlockDevTypeFlagFile);
+                            switch (BlockDevTypeFlag) {
+                                case 0:
+                                    printf("Block Device Type: Disk");
+                            }
                     }
                 }
             }
