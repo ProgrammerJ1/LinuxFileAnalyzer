@@ -196,7 +196,23 @@ int Program(char* File,bool GUI) {
                             fread(&BlockDevTypeFlag,sizeof(char),1,BlockDevTypeFlagFile);
                             switch (BlockDevTypeFlag) {
                                 case 0:
-                                    printf("Block Device Type: Disk");
+                                    printf("%s","Block Device Type: Disk");
+                                case 1:
+                                    printf("%s","Block Device Type: Tape Storage");
+                                case 2:
+                                    printf("%s","Block Device Type: Printer");
+                                case 3:
+                                    printf("%s","Block Device Type: HP Scanner Processor");
+                                case 4:
+                                    printf("%s","Block Device Type: Write Once Read Many Memory");
+                                case 5:
+                                    printf("%s","Block Device Type: Read Only Memory");
+                                case 6:
+                                    printf("%s","Block Device Type: Scanner");
+                                case 7:
+                                    printf("%s","Block Device Type: Magnetic Optical disk");
+                                case 8:
+                                    printf("%s","Block Device Type: Medium Changer");
                             }
                     }
                 }
