@@ -14,6 +14,8 @@
 #include <sys/ioctl.h>
 #include <regex>
 #include <sstream>
+#include <blkid/blkid.h>
+#include <linux/kdev_t.h>
 using namespace std;
 char FindFileType(mode_t FileStatMode) {
     if (S_ISREG(FileStatMode)) {
@@ -135,7 +137,7 @@ int Program(char* File,bool GUI) {
             if (SpecialInfo) {
                 switch (analysisoffile.filetype) {
                     case 0:
-                      {
+                        {
                             uint8_t* Contents;
                             FILE* fp=fopen(File,"rb");
                             fread(Contents,1,FileStat.st_size,fp);
@@ -148,9 +150,9 @@ int Program(char* File,bool GUI) {
                                 }
                             }
                             break;
-                      }
+                        }
                     case 1:
-                      {
+                        {
                             printf("%s","Directory Contents\n________________");
                             DIR *d;
                             struct dirent *dir;
@@ -161,60 +163,30 @@ int Program(char* File,bool GUI) {
                                 }
                             }
                             closedir(d);
-                      }
+                        }
                     case 2:
                       {
                             struct stat BlockDeviceStats;
                             stat(File,&BlockDeviceStats);
                             dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
-                            char* BlockDevName=bdevname(BlockDeviceId)
+                            char* BlockDevName=blkid_devno_to_devname(BlockDeviceId);
                             printf("Block Device Name: %s",BlockDevName);
-                            printf("Block Device Major Number: %u",major(BlockDeviceId));
-                            printf("Block Device Minor Number: %u",minor(BlockDeviceId));
-                            size_t SizeofBlockDev;
-                            FILE* fp=fopen(File,"r");
-                            ioctl(fileno(fp),BLKGETSIZE64,&SizeofBlockDev);
-                            printf("Size of Block Device: %u",SizeofBlockDev);
-                            char* BlockDeviceReadOnlyInfoFilePath="/sys/class/block";
-                            strcat(BlockDeviceReadOnlyInfoFilePath,BlockDevName);
-                            strcat(BlockDeviceReadOnlyInfoFilePath,"/ro");
-                            FILE* BlockDeviceReadOnlyInfoFile=fopen(BlockDeviceReadOnlyInfoFilePath,"r");
-                            char* BlockDeviceReadOnlyNumber;
-                            fread(BlockDeviceReadOnlyNumber,sizeof(char),1,BlockDeviceReadOnlyInfoFile);
-                            if (BlockDeviceReadOnlyNumber=="0") {
-                              printf("%s","Block Device Read Only: No");
+                            printf("Block Device Major Number: %u",MAJOR(BlockDeviceId));
+                            printf("Block Device Minor Number: %u",MINOR(BlockDeviceId));
+                            char* BlockDevRemovableFlagFilePath="/sys/block/";
+                            strcat(BlockDevRemovableFlagFilePath,BlockDevName);
+                            strcat(BlockDevRemovableFlagFilePath,"/removeable");
+                            char BlockDevRemovableFlag;
+                            FILE* BlockDevRemovableFlagFile=fopen(BlockDevRemovableFlagFilePath,"r");
+                            fread(&BlockDevRemovableFlag,sizeof(char),1,BlockDevRemovableFlagFile);
+                            if (BlockDevRemovableFlag=='0') {
+                                printf("%s","Block Device Removable: No");
                             } else {
-                              printf("%s","Block Device Read Only: Yes");
+                                printf("%s","Block Device Removable: Yes");
                             }
-                            regex BlockDevicePartationCheckerRegex=regex("\\w+\\d+");
-                            if(regex_match(string(BlockDevName),regex("loop\\d+"))) {
-                              printf("Block Device Type: Loop");
-                            } else if (regex_match(string(BlockDevName),BlockDevicePartationCheckerRegex)) {
-                              printf("Block Device Type: Partition");
-                            } else {
-                              printf("Block Device Type: Disk");
-                            }
-                            struct stat MountsListStats;
-                            stat("/proc/mounts",&MountsListStats);
-                            FILE* MountListFile=fopen("/proc/mounts","r");
-                            char* MountList;fread(MountList,sizeof(char),MountsListStats.st_size,MountListFile);
-                            size_t AmountofLines;
-                            for (int i=0;MountList[i]!='\0';i++) {
-                              if (MountList[i]=='\n') {
-                                AmountofLines++;
-                              }
-                            }
-                            istringstream MountListStream{string(MountList)};
-                            FindMount:for (size_t i=0;i<AmountofLines||;i++) {
-                              string MountEntry;
-                              size_t MountEntryLength;
-                              getline(MountListStream,MountEntry);
-                              MountEntryLength=MountEntry.size();
-                              if (regex_match(string(MountEntry),regex(BlockDevName))) {
-                                ;
-                              }
-                            }
-                      }
+                            blkid_loff_t BlockDevRemovableSize=blkid_get_dev_size(fileno(BlockDevRemovableFlagFile));
+                            printf("Block Device Size: %u",BlockDevRemovableSize);
+                    }
                 }
             }
             return 0;
