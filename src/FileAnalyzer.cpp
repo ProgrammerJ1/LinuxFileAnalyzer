@@ -213,6 +213,10 @@ int Program(char* File,bool GUI) {
                                     printf("%s","Block Device Type: Magnetic Optical disk");
                                 case 8:
                                     printf("%s","Block Device Type: Medium Changer");
+                                case 9:
+                                    printf("%s","Block Device Type: Communications Device");
+                                case 0x0c:
+                                    printf("%s","Block Device Type: Raid")
                             }
                     }
                 }
