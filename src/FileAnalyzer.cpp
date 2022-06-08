@@ -197,26 +197,45 @@ int Program(char* File,bool GUI) {
                             switch (BlockDevTypeFlag) {
                                 case 0:
                                     printf("%s","Block Device Type: Disk");
+                                    break;
                                 case 1:
                                     printf("%s","Block Device Type: Tape Storage");
+                                    break;
                                 case 2:
                                     printf("%s","Block Device Type: Printer");
+                                    break;
                                 case 3:
                                     printf("%s","Block Device Type: HP Scanner Processor");
+                                    break;
                                 case 4:
                                     printf("%s","Block Device Type: Write Once Read Many Memory");
+                                    break;
                                 case 5:
                                     printf("%s","Block Device Type: Read Only Memory");
+                                    break;
                                 case 6:
                                     printf("%s","Block Device Type: Scanner");
+                                    break;
                                 case 7:
                                     printf("%s","Block Device Type: Magnetic Optical disk");
+                                    break;
                                 case 8:
                                     printf("%s","Block Device Type: Medium Changer");
+                                    break;
                                 case 9:
                                     printf("%s","Block Device Type: Communications Device");
+                                    break;
                                 case 0x0c:
-                                    printf("%s","Block Device Type: Raid")
+                                    printf("%s","Block Device Type: Raid");
+                                    break;
+                                case 0x0e:
+                                    printf("%s","Block Device Type: RBC");
+                                    break;
+                                case 0x7f:
+                                    printf("%s","Block Device Type: No Lun");
+                                    break;
+                                case default:
+                                    printf("%s","Block Device Type: Other");
                             }
                     }
                 }
