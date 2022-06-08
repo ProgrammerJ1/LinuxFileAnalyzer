@@ -15,6 +15,7 @@
 #include <regex>
 #include <sstream>
 #include <blkid/blkid.h>
+#include <algorithm>
 #include <linux/kdev_t.h>
 using namespace std;
 char FindFileType(mode_t FileStatMode) {
@@ -237,6 +238,16 @@ int Program(char* File,bool GUI) {
                                 case default:
                                     printf("%s","Block Device Type: Other");
                             }
+                            FILE* MountListFile=fopen("/proc/mounts","r")
+                            char* MountListCharArr;
+                            struct stat MountListFileStats;
+                            stat("/proc/mounts",MountListFileStats);
+                            size_t MountListSize=MountListFileStats.st_size;
+                            fread(MountListCharArr,sizeof(char),MountListSize,MountListFile);
+                            string MountListString=MountList;
+                            replace(MountListString.begin(),MountListString.end(),'\n','\0');
+                            char** MountList;
+                            memcpy(MountListString.c_str(),MountListSize,MountList);
                     }
                 }
             }
