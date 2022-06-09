@@ -286,6 +286,7 @@ int Program(char* File,bool GUI) {
                                     memcpy(MountTargetEntryInfo,MountTargetEntry.c_str(),MountTargetEntry.size());
                                     cout<<"Block Device Mount Point: "<<MountTargetEntryInfo[1]<<endl;
                                 }
+                              break;
                           }
                         case 3:
                               {
@@ -323,6 +324,7 @@ int Program(char* File,bool GUI) {
                                   printf("Character Device Name: %s",DeviceName);
                                   printf("Major Device Id: %u",MAJOR(CharDevId));
                                   printf("Minor Device Id: %u",MINOR(CharDevId));
+                                  break;
                               }
                         case 4:
                             {
