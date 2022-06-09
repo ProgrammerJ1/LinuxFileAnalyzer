@@ -14,6 +14,7 @@
 #include <sys/ioctl.h>
 #include <regex>
 #include <sstream>
+#include <iostream>
 #include <blkid/blkid.h>
 #include <algorithm>
 #include <linux/kdev_t.h>
@@ -248,6 +249,25 @@ int Program(char* File,bool GUI) {
                             replace(MountListString.begin(),MountListString.end(),'\n','\0');
                             char** MountList;
                             memcpy(MountListString.c_str(),MountListSize,MountList);
+                            string MountTargetEntry;
+                            bool DeviceMounted;
+                            for (size_t i=0;i<sizeof(MountList);i++) {
+                                if (regex_match(MountList[i],regex(BlockDevName))) {
+                                    MountTargetEntry=MountList[i];
+                                    DeviceMounted=true;
+                                    printf("Block Device Mounted: Yes");
+                                    break;
+                                } else if (i+1==sizeof()) {
+                                    DeviceMounted=false;
+                                    printf("Block Device Mounted: No");
+                                }
+                            }
+                            if (DeviceMounted) {
+                                replace(MountTargetEntry.begin(),MountTargetEntry.end(),' ','\0');
+                                char** MountTargetEntryInfo;
+                                memcpy(MountTargetEntryInfo,MountTargetEntry.c_str(),MountTargetEntry.size());
+                                cout<<"Block Device Mount Point: "<<MountTargetEntryInfo[1]<<endl;
+                            }
                     }
                 }
             }
