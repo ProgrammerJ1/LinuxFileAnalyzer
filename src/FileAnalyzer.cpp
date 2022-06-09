@@ -20,6 +20,23 @@
 #include <linux/kdev_t.h>
 #include <linux/cdev.h>
 using namespace std;
+class PartitionData {
+    public:
+        unsigned int DeviceMajor;
+        unsigned int DeviceMinor;
+        size_t blocks;
+        char* Name;
+    PartitionData(char* PartitonDataCharArr) {
+        string PartitonDataString=PartitonDataCharArr;
+        replace(PartitonDataString,'\w+','\0');
+        char** PartitonDataCharArrArr;
+        memcpy(PartitonDataCharArrArr,PartitonDataString.c_str(),PartitonDataString.size());
+        sscanf(PartitonDataCharArrArr[0],"%u",&DeviceMajor);
+        sscanf(PartitonDataCharArrArr[1],"%u"&DeviceMinor);
+        sscanf(PartitonDataCharArrArr[2],"%lu",&blocks);
+        strcpy(Name,(const char*)PartitonDataCharArrArr[3]);
+    }
+}
 char FindFileType(mode_t FileStatMode) {
     if (S_ISREG(FileStatMode)) {
         return 0;
@@ -95,8 +112,8 @@ int Program(char* File,bool GUI) {
             }
             printf("Device Id: 0x%X\n",analysisoffile.DeviceNumber);
             printf("Inode Number: %u",analysisoffile.inodenumber);
-            printf("Amount of Hard Links: %u",analysisoffile.NumberofHardLinks);
-            printf("%s","Permissions: ");
+            printf("Amount of Hard Links: %u\n",analysisoffile.NumberofHardLinks);
+            printf("%s\n","Permissions: ");
             uint8_t AmountofPerms=0;
             if (analysisoffile.Readable) {
                 printf("%s","Readable");
@@ -171,7 +188,7 @@ int Program(char* File,bool GUI) {
                           {
                                 struct stat BlockDeviceStats;
                                 stat(File,&BlockDeviceStats);
-                                dev_t BlockDeviceId=BlockDeviceStats.st_dev;
+                                dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
                                 char* BlockDevName=blkid_devno_to_devname(BlockDeviceId);
                                 printf("Block Device Name: %s",BlockDevName);
                                 printf("Block Device Major Number: %u",MAJOR(BlockDeviceId));
@@ -240,7 +257,7 @@ int Program(char* File,bool GUI) {
                                     case default:
                                         printf("%s","Block Device Type: Other");
                                 }
-                                FILE* MountListFile=fopen("/proc/mounts","r")
+                                FILE* MountListFile=fopen("/proc/mounts","r");
                                 char* MountListCharArr;
                                 struct stat MountListFileStats;
                                 stat("/proc/mounts",MountListFileStats);
@@ -272,8 +289,45 @@ int Program(char* File,bool GUI) {
                           }
                         case 3:
                               {
-                                  printf("%s","")
+                                  char* DeviceName;
+                                  struct* stat PartitionsListStats=(struct stat*)malloc(144);
+                                  stat("/proc/partitions",PartitionsListStats
+                                  FILE* PartitionListFile=fopen("/proc/partitions","r");
+                                  size_t* PartitionListSize=(size_t*)malloc(8);
+                                  *PartitionListSize=*PartitionsListStats.st_size;
+                                  free(PartitionsListStats);
+                                  char* PartitionListCharArr=(char*)calloc(PartitionListSize,sizeof(char));
+                                  fread(PartitionListCharArr,sizeof(char),*PartitionsListStats.st_size,PartitionListFile);
+                                  string* PartitionListString=(string*)malloc(*PartitionListSize);
+                                  replace(PartitionListString.begin(),PartitionListString.end(),'\n','\0');
+                                  char** PartitionListString=(char**)malloc(*PartitionListSize);
+                                  memcpy(PartitionList,PartitionListString.c_str(),PartitionListString.size()));
+                                  PartitionData* PartitionDataList=(PartitionData*)calloc(sizeof(PartitionList),sizeof(PartitionData));
+                                  free(PartitionListSize);
+                                  free(PartitionListCharArr);
+                                  free(PartitionListString);
+                                  free(PartitionListString);
+                                  dev_t* CharDevId=(dev_t*)malloc(8);
+                                  for (size_t i=1;i<sizeof(PartitionList);i++) {
+                                      string PartionListCurEntry=PartitionList[i];
+                                      regex_replace(regex("(^\s+)|(\s+$)"),PartionListCurEntry,"");
+                                      char* PartionListCurEntryCharrArr;
+                                      memcpy(PartionListCurEntryCharrArr,PartionListCurEntry.c_str(),PartionListCurEntry.size());
+                                      PartitionDataList[i]=PartitionData(PartionListCurEntryCharrArr);
+                                  }
+                                  for (size_t i=0;sizeof(PartitionDataList);i++) {
+                                      if (PartitionDataList[i].DeviceMajor==MAJOR(CharDevId)&&PartitionDataList[i].DeviceMinor==MINOR(CharDevId)) {
+                                          DeviceName=PartitionDataList[i].Name;
+                                      }
+                                  }
+                                  printf("Character Device Name: %s",DeviceName);
+                                  printf("Major Device Id: %u",MAJOR(CharDevId));
+                                  printf("Minor Device Id: %u",MINOR(CharDevId));
                               }
+                        case 4:
+                            {
+                                ;
+                            }
                     }
                 }
             }
