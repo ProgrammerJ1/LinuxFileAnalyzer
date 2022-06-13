@@ -252,7 +252,7 @@ int Program(char* File) {
                                 case 0x7f:
                                     printf("%s","Block Device Type: No Lun");
                                     break;
-                                case default:
+                                default:
                                     printf("%s","Block Device Type: Other");
                             }
                             FILE* MountListFile=fopen("/proc/mounts","r");
@@ -273,7 +273,7 @@ int Program(char* File) {
                                     DeviceMounted=true;
                                     printf("Block Device Mounted: Yes");
                                     break;
-                                } else if (i+1==sizeof()) {
+                                } else if (i+1==sizeof(MountList)) {
                                     DeviceMounted=false;
                                     printf("Block Device Mounted: No");
                                 }
@@ -304,9 +304,10 @@ int Program(char* File) {
                                 PartitionData* PartitionDataList=(PartitionData*)calloc(sizeof(PartitionListString),sizeof(PartitionData));
                                 free(PartitionListSize);
                                 free(PartitionListCharArr);
-                                free(PartitionListString);
-                                free(PartitionListString);
                                 dev_t* CharDevId=(dev_t*)malloc(8);
+                                struct stat* CharacterDeviceStats=(struct stat*)malloc(144);
+                                *CharDevId=CharacterDeviceStats->st_rdev;
+                                free(CharacterDeviceStats);
                                 for (size_t i=1;i<sizeof(PartitionListString);i++) {
                                     string PartionListCurEntry=PartitionListString[i];
                                     regex_replace(PartionListCurEntry,regex("(^\\s+)|(\\s+$)"),"");
@@ -314,14 +315,15 @@ int Program(char* File) {
                                     memcpy(PartionListCurEntryCharrArr,PartionListCurEntry.c_str(),PartionListCurEntry.size());
                                     PartitionDataList[i]=PartitionData(PartionListCurEntryCharrArr);
                                 }
+                                free(PartitionListString);
                                 for (size_t i=0;sizeof(PartitionDataList);i++) {
-                                    if (PartitionDataList[i].DeviceMajor==MAJOR(CharDevId)&&PartitionDataList[i].DeviceMinor==MINOR(CharDevId)) {
+                                    if (PartitionDataList[i].DeviceMajor==MAJOR(*CharDevId)&&PartitionDataList[i].DeviceMinor==MINOR(*CharDevId)) {
                                         DeviceName=PartitionDataList[i].Name;
                                     }
                                 }
                                 printf("Character Device Name: %s",DeviceName);
-                                printf("Major Device Id: %u",MAJOR(CharDevId));
-                                printf("Minor Device Id: %u",MINOR(CharDevId));
+                                printf("Major Device Id: %u",MAJOR(*CharDevId));
+                                printf("Minor Device Id: %u",MINOR(*CharDevId));
                                 break;
                             }
                     /* No pipe support*/
@@ -362,7 +364,7 @@ int main(int argc,char** argv) {
             printf("%s","GNU FileAnalyzer 1.0.0");
             return 0;
         } else {
-            return Program(argv[1],false);
+            return Program(argv[1]);
         }
     } else {
         perror("Error: Can only analyze one file");
