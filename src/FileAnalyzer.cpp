@@ -299,23 +299,24 @@ int Program(char* File) {
                                 fread(PartitionListCharArr,sizeof(char),PartitionsListStats->st_size,PartitionListFile);
                                 string* PartitionListString=(string*)malloc(*PartitionListSize);
                                 replace((*PartitionListString).begin(),(*PartitionListString).end(),'\n','\0');
-                                char** PartitionListString=(char**)malloc(*PartitionListSize);
-                                memcpy(PartitionListString,(*PartitionListString).c_str(),(*PartitionListString).size());
-                                PartitionData* PartitionDataList=(PartitionData*)calloc(sizeof(PartitionListString),sizeof(PartitionData));
+                                char** PartitionList=(char**)malloc(*PartitionListSize);
+                                memcpy(PartitionList,(*PartitionListString).c_str(),(*PartitionListString).size());
+                                PartitionData* PartitionDataList=(PartitionData*)calloc(sizeof(PartitionList),sizeof(PartitionData));
                                 free(PartitionListSize);
                                 free(PartitionListCharArr);
+                                free(PartitionListString);
                                 dev_t* CharDevId=(dev_t*)malloc(8);
                                 struct stat* CharacterDeviceStats=(struct stat*)malloc(144);
                                 *CharDevId=CharacterDeviceStats->st_rdev;
                                 free(CharacterDeviceStats);
-                                for (size_t i=1;i<sizeof(PartitionListString);i++) {
-                                    string PartionListCurEntry=PartitionListString[i];
+                                for (size_t i=1;i<sizeof(PartitionList);i++) {
+                                    string PartionListCurEntry=PartitionList[i];
                                     regex_replace(PartionListCurEntry,regex("(^\\s+)|(\\s+$)"),"");
                                     char* PartionListCurEntryCharrArr;
                                     memcpy(PartionListCurEntryCharrArr,PartionListCurEntry.c_str(),PartionListCurEntry.size());
                                     PartitionDataList[i]=PartitionData(PartionListCurEntryCharrArr);
                                 }
-                                free(PartitionListString);
+                                free(PartitionList);
                                 for (size_t i=0;sizeof(PartitionDataList);i++) {
                                     if (PartitionDataList[i].DeviceMajor==MAJOR(*CharDevId)&&PartitionDataList[i].DeviceMinor==MINOR(*CharDevId)) {
                                         DeviceName=PartitionDataList[i].Name;
