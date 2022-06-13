@@ -67,7 +67,7 @@ char* FormatNumbertoDateNumber(uint8_t Number) {
     }
     return StrNum;
 }
-int Program(char* File,bool GUI) {
+int Program(char* File) {
     if (access((const char*)File,F_OK)) {
         struct stat FileStat;
         stat(File,&FileStat);
@@ -88,262 +88,260 @@ int Program(char* File,bool GUI) {
         analysisoffile.ChangedLast=FileStat.st_ctim;
         analysisoffile.OnwerId=FileStat.st_uid;
         analysisoffile.GroupId=FileStat.st_gid;
-        if (GUI) {
-            printf("Filename: %s\n",analysisoffile.filename);
-            printf("Amount of Bytes: %u\n",analysisoffile.bytes);
-            printf("Amount of Blocks: %u\n",analysisoffile.blocks);
-            printf("Block Size: %u\n",analysisoffile.blocksize);
-            switch (analysisoffile.filetype) {
-                case 0:
-                    printf("%s","File Type: Regular\n");
-                case 1:
-                    printf("%s","File Type: Directory");
-                case 2:
-                    printf("%s","File Type: Block Device");
-                case 3:
-                    printf("%s","File Type: Character Device");
-                case 4:
-                    printf("%s","File Type: Pipe");
-                case 5:
-                    printf("%s","File Type: Link");
-                case 6:
-                    printf("%s","File Type: Socket");
-            }
-            printf("Device Id: 0x%X\n",analysisoffile.DeviceNumber);
-            printf("Inode Number: %u",analysisoffile.inodenumber);
-            printf("Amount of Hard Links: %u\n",analysisoffile.NumberofHardLinks);
-            printf("%s\n","Permissions: ");
-            uint8_t AmountofPerms=0;
-            if (analysisoffile.Readable) {
-                printf("%s","Readable");
+        printf("Filename: %s\n",analysisoffile.filename);
+        printf("Amount of Bytes: %u\n",analysisoffile.bytes);
+        printf("Amount of Blocks: %u\n",analysisoffile.blocks);
+        printf("Block Size: %u\n",analysisoffile.blocksize);
+        switch (analysisoffile.filetype) {
+            case 0:
+                printf("%s","File Type: Regular\n");
+            case 1:
+                printf("%s","File Type: Directory");
+            case 2:
+                printf("%s","File Type: Block Device");
+            case 3:
+                printf("%s","File Type: Character Device");
+            case 4:
+                printf("%s","File Type: Pipe");
+            case 5:
+                printf("%s","File Type: Link");
+            case 6:
+                printf("%s","File Type: Socket");
+        }
+        printf("Device Id: 0x%X\n",analysisoffile.DeviceNumber);
+        printf("Inode Number: %u",analysisoffile.inodenumber);
+        printf("Amount of Hard Links: %u\n",analysisoffile.NumberofHardLinks);
+        printf("%s\n","Permissions: ");
+        uint8_t AmountofPerms=0;
+        if (analysisoffile.Readable) {
+            printf("%s","Readable");
+            AmountofPerms+=1;
+        } else if (analysisoffile.Writeable) {
+            if (AmountofPerms>1) {
+                printf("%s",", Writable");
+            } else {
+                printf("%s","Writeable");
                 AmountofPerms+=1;
-            } else if (analysisoffile.Writeable) {
-                if (AmountofPerms>1) {
-                    printf("%s",", Writable");
-                } else {
-                    printf("%s","Writeable");
-                    AmountofPerms+=1;
-                }
-            } else if (analysisoffile.Executable) {
-                if (AmountofPerms>1) {
-                    printf("%s",", Executable");
-                } else {
-                    printf("Executable");
-                }
             }
-            AmountofPerms=NULL;
-            printf("%c",'\n');
-            struct tm TrueAccessTime;
-            localtime_r(&analysisoffile.AccessedLast.tv_sec,&TrueAccessTime);
-            printf("Last time accessed: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueAccessTime.tm_wday)->second,getMonthTable().find(TrueAccessTime.tm_mon),FormatNumbertoDateNumber(TrueAccessTime.tm_mday),TrueAccessTime.tm_year+1900,TrueAccessTime.tm_hour,TrueAccessTime.tm_min,TrueAccessTime.tm_sec,TrueAccessTime.tm_zone);
-            struct tm TrueModifiyTime;
-            localtime_r(&analysisoffile.ModifiedLast.tv_sec,&TrueModifiyTime);
-            printf("Last time modified: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueModifiyTime.tm_wday)->second,getMonthTable().find(TrueModifiyTime.tm_mon),FormatNumbertoDateNumber(TrueModifiyTime.tm_mday),TrueModifiyTime.tm_year+1900,TrueModifiyTime.tm_hour,TrueModifiyTime.tm_min,TrueModifiyTime.tm_sec,TrueModifiyTime.tm_zone);
-            struct tm TrueChangeTime;
-            localtime_r(&analysisoffile.ChangedLast.tv_sec,&TrueChangeTime);
-            printf("Last time changed: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueChangeTime.tm_wday)->second,getMonthTable().find(TrueChangeTime.tm_mon),FormatNumbertoDateNumber(TrueChangeTime.tm_mday),TrueChangeTime.tm_year+1900,TrueChangeTime.tm_hour,TrueChangeTime.tm_min,TrueChangeTime.tm_sec,TrueChangeTime.tm_zone);
-            printf("Group Id Owner: %u",analysisoffile.GroupId);
-            printf("Owner ID: %u",analysisoffile.OnwerId);
-            printf("%s","Would you like to print file type specific information? [Y/n]");
-            char Choice=getchar();
-            bool SpecialInfo;
-            switch (Choice) {
-                case 'Y':
-                    SpecialInfo=true;
-                default:
-                    SpecialInfo=false;
+        } else if (analysisoffile.Executable) {
+            if (AmountofPerms>1) {
+                printf("%s",", Executable");
+            } else {
+                printf("Executable");
             }
-            if (SpecialInfo) {
-                switch (analysisoffile.filetype) {
-                        case 0:
-                            {
-                                uint8_t* Contents;
-                                FILE* fp=fopen(File,"rb");
-                                fread(Contents,1,FileStat.st_size,fp);
-                                fclose(fp);
-                                printf("%s","File Contents: ");
-                                for (size_t i=0;i<sizeof(Contents);i++) {
-                                    printf("%X",Contents[i]);
-                                    if (i+1!=sizeof(Contents)) {
-                                        printf("%c",' ');
-                                    }
+        }
+        AmountofPerms=NULL;
+        printf("%c",'\n');
+        struct tm TrueAccessTime;
+        localtime_r(&analysisoffile.AccessedLast.tv_sec,&TrueAccessTime);
+        printf("Last time accessed: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueAccessTime.tm_wday)->second,getMonthTable().find(TrueAccessTime.tm_mon),FormatNumbertoDateNumber(TrueAccessTime.tm_mday),TrueAccessTime.tm_year+1900,TrueAccessTime.tm_hour,TrueAccessTime.tm_min,TrueAccessTime.tm_sec,TrueAccessTime.tm_zone);
+        struct tm TrueModifiyTime;
+        localtime_r(&analysisoffile.ModifiedLast.tv_sec,&TrueModifiyTime);
+        printf("Last time modified: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueModifiyTime.tm_wday)->second,getMonthTable().find(TrueModifiyTime.tm_mon),FormatNumbertoDateNumber(TrueModifiyTime.tm_mday),TrueModifiyTime.tm_year+1900,TrueModifiyTime.tm_hour,TrueModifiyTime.tm_min,TrueModifiyTime.tm_sec,TrueModifiyTime.tm_zone);
+        struct tm TrueChangeTime;
+        localtime_r(&analysisoffile.ChangedLast.tv_sec,&TrueChangeTime);
+        printf("Last time changed: %s, %s %s, %u %u:%u:%u %s\n",getWeekTable().find(TrueChangeTime.tm_wday)->second,getMonthTable().find(TrueChangeTime.tm_mon),FormatNumbertoDateNumber(TrueChangeTime.tm_mday),TrueChangeTime.tm_year+1900,TrueChangeTime.tm_hour,TrueChangeTime.tm_min,TrueChangeTime.tm_sec,TrueChangeTime.tm_zone);
+        printf("Group Id Owner: %u",analysisoffile.GroupId);
+        printf("Owner ID: %u",analysisoffile.OnwerId);
+        printf("%s","Would you like to print file type specific information? [Y/n]");
+        char Choice=getchar();
+        bool SpecialInfo;
+        switch (Choice) {
+            case 'Y':
+                SpecialInfo=true;
+            default:
+                SpecialInfo=false;
+        }
+        if (SpecialInfo) {
+            switch (analysisoffile.filetype) {
+                    case 0:
+                        {
+                            uint8_t* Contents;
+                            FILE* fp=fopen(File,"rb");
+                            fread(Contents,1,FileStat.st_size,fp);
+                            fclose(fp);
+                            printf("%s","File Contents: ");
+                            for (size_t i=0;i<sizeof(Contents);i++) {
+                                printf("%X",Contents[i]);
+                                if (i+1!=sizeof(Contents)) {
+                                    printf("%c",' ');
                                 }
-                                break;
                             }
-                        case 1:
-                            {
-                                printf("%s","Directory Contents\n________________");
-                                DIR *d;
-                                struct dirent *dir;
-                                d=opendir(File);
-                                if (d) {
-                                    while ((dir = readdir(d)) != NULL) {
-                                        printf("%s",dir->d_name);
-                                    }
+                            break;
+                        }
+                    case 1:
+                        {
+                            printf("%s","Directory Contents\n________________");
+                            DIR *d;
+                            struct dirent *dir;
+                            d=opendir(File);
+                            if (d) {
+                                while ((dir = readdir(d)) != NULL) {
+                                    printf("%s",dir->d_name);
                                 }
-                                closedir(d);
                             }
-                        case 2:
-                          {
-                                struct stat BlockDeviceStats;
-                                stat(File,&BlockDeviceStats);
-                                dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
-                                char* BlockDevName=blkid_devno_to_devname(BlockDeviceId);
-                                printf("Block Device Name: %s",BlockDevName);
-                                printf("Block Device Major Number: %u",MAJOR(BlockDeviceId));
-                                printf("Block Device Minor Number: %u",MINOR(BlockDeviceId));
-                                char* BlockDevInfoPath="/sys/block/";
-                                strcat(BlockDevInfoPath,BlockDevName);
-                                char* BlockDevRemovableFlagFilePath;
-                                memcpy(BlockDevRemovableFlagFilePath,BlockDevInfoPath,sizeof(BlockDevInfoPath));
-                                strcat(BlockDevRemovableFlagFilePath,"/removeable");
-                                char BlockDevRemovableFlag;
-                                FILE* BlockDevRemovableFlagFile=fopen(BlockDevRemovableFlagFilePath,"r");
-                                fread(&BlockDevRemovableFlag,sizeof(char),1,BlockDevRemovableFlagFile);
-                                if (BlockDevRemovableFlag=='0') {
-                                    printf("%s","Block Device Removable: No");
-                                } else {
-                                    printf("%s","Block Device Removable: Yes");
-                                }
-                                fclose(BlockDevRemovableFlagFile);
-                                blkid_loff_t BlockDevRemovableSize=blkid_get_dev_size(fileno(BlockDevRemovableFlagFile));
-                                printf("Block Device Size: %u",BlockDevRemovableSize);
-                                char* BlockDevTypeFlagFilePath;
-                                memcpy(BlockDevTypeFlagFilePath,BlockDevInfoPath,sizeof(BlockDevInfoPath));
-                                FILE* BlockDevTypeFlagFile=fopen(BlockDevTypeFlagFilePath,"rb");
-                                uint8_t BlockDevTypeFlag;
-                                fread(&BlockDevTypeFlag,sizeof(char),1,BlockDevTypeFlagFile);
-                                switch (BlockDevTypeFlag) {
-                                    case 0:
-                                        printf("%s","Block Device Type: Disk");
-                                        break;
-                                    case 1:
-                                        printf("%s","Block Device Type: Tape Storage");
-                                        break;
-                                    case 2:
-                                        printf("%s","Block Device Type: Printer");
-                                        break;
-                                    case 3:
-                                        printf("%s","Block Device Type: HP Scanner Processor");
-                                        break;
-                                    case 4:
-                                        printf("%s","Block Device Type: Write Once Read Many Memory");
-                                        break;
-                                    case 5:
-                                        printf("%s","Block Device Type: Read Only Memory");
-                                        break;
-                                    case 6:
-                                        printf("%s","Block Device Type: Scanner");
-                                        break;
-                                    case 7:
-                                        printf("%s","Block Device Type: Magnetic Optical disk");
-                                        break;
-                                    case 8:
-                                        printf("%s","Block Device Type: Medium Changer");
-                                        break;
-                                    case 9:
-                                        printf("%s","Block Device Type: Communications Device");
-                                        break;
-                                    case 0x0c:
-                                        printf("%s","Block Device Type: Raid");
-                                        break;
-                                    case 0x0e:
-                                        printf("%s","Block Device Type: RBC");
-                                        break;
-                                    case 0x7f:
-                                        printf("%s","Block Device Type: No Lun");
-                                        break;
-                                    case default:
-                                        printf("%s","Block Device Type: Other");
-                                }
-                                FILE* MountListFile=fopen("/proc/mounts","r");
-                                char* MountListCharArr;
-                                struct stat MountListFileStats;
-                                stat("/proc/mounts",&MountListFileStats);
-                                size_t MountListSize=MountListFileStats.st_size;
-                                fread(MountListCharArr,sizeof(char),MountListSize,MountListFile);
-                                string MountListString=MountListCharArr;
-                                replace(MountListString.begin(),MountListString.end(),'\n','\0');
-                                char** MountList;
-                                memcpy(MountList,MountListString.c_str(),MountListSize);
-                                string MountTargetEntry;
-                                bool DeviceMounted;
-                                for (size_t i=0;i<sizeof(MountList);i++) {
-                                    if (regex_match(MountList[i],regex(BlockDevName))) {
-                                        MountTargetEntry=MountList[i];
-                                        DeviceMounted=true;
-                                        printf("Block Device Mounted: Yes");
-                                        break;
-                                    } else if (i+1==sizeof()) {
-                                        DeviceMounted=false;
-                                        printf("Block Device Mounted: No");
-                                    }
-                                }
-                                if (DeviceMounted) {
-                                    replace(MountTargetEntry.begin(),MountTargetEntry.end(),' ','\0');
-                                    char** MountTargetEntryInfo;
-                                    memcpy(MountTargetEntryInfo,MountTargetEntry.c_str(),MountTargetEntry.size());
-                                    cout<<"Block Device Mount Point: "<<MountTargetEntryInfo[1]<<endl;
-                                }
-                              break;
-                          }
-                        case 3:
-                            {
-                                    char* DeviceName;
-                                    struct stat* PartitionsListStats=(struct stat*)malloc(144);
-                                    stat("/proc/partitions",PartitionsListStats);
-                                    FILE* PartitionListFile=fopen("/proc/partitions","r");
-                                    size_t* PartitionListSize=(size_t*)malloc(8);
-                                    *PartitionListSize=PartitionsListStats->st_size;
-                                    free(PartitionsListStats);
-                                    char* PartitionListCharArr=(char*)calloc(*PartitionListSize,sizeof(char));
-                                    fread(PartitionListCharArr,sizeof(char),PartitionsListStats->st_size,PartitionListFile);
-                                    string* PartitionListString=(string*)malloc(*PartitionListSize);
-                                    replace((*PartitionListString).begin(),(*PartitionListString).end(),'\n','\0');
-                                    char** PartitionListString=(char**)malloc(*PartitionListSize);
-                                    memcpy(PartitionListString,(*PartitionListString).c_str(),(*PartitionListString).size());
-                                    PartitionData* PartitionDataList=(PartitionData*)calloc(sizeof(PartitionListString),sizeof(PartitionData));
-                                    free(PartitionListSize);
-                                    free(PartitionListCharArr);
-                                    free(PartitionListString);
-                                    free(PartitionListString);
-                                    dev_t* CharDevId=(dev_t*)malloc(8);
-                                    for (size_t i=1;i<sizeof(PartitionListString);i++) {
-                                        string PartionListCurEntry=PartitionListString[i];
-                                        regex_replace(PartionListCurEntry,regex("(^\\s+)|(\\s+$)"),"");
-                                        char* PartionListCurEntryCharrArr;
-                                        memcpy(PartionListCurEntryCharrArr,PartionListCurEntry.c_str(),PartionListCurEntry.size());
-                                        PartitionDataList[i]=PartitionData(PartionListCurEntryCharrArr);
-                                    }
-                                    for (size_t i=0;sizeof(PartitionDataList);i++) {
-                                        if (PartitionDataList[i].DeviceMajor==MAJOR(CharDevId)&&PartitionDataList[i].DeviceMinor==MINOR(CharDevId)) {
-                                            DeviceName=PartitionDataList[i].Name;
-                                        }
-                                    }
-                                    printf("Character Device Name: %s",DeviceName);
-                                    printf("Major Device Id: %u",MAJOR(CharDevId));
-                                    printf("Minor Device Id: %u",MINOR(CharDevId));
+                            closedir(d);
+                        }
+                    case 2:
+                        {
+                            struct stat BlockDeviceStats;
+                            stat(File,&BlockDeviceStats);
+                            dev_t BlockDeviceId=BlockDeviceStats.st_rdev;
+                            char* BlockDevName=blkid_devno_to_devname(BlockDeviceId);
+                            printf("Block Device Name: %s",BlockDevName);
+                            printf("Block Device Major Number: %u",MAJOR(BlockDeviceId));
+                            printf("Block Device Minor Number: %u",MINOR(BlockDeviceId));
+                            char* BlockDevInfoPath="/sys/block/";
+                            strcat(BlockDevInfoPath,BlockDevName);
+                            char* BlockDevRemovableFlagFilePath;
+                            memcpy(BlockDevRemovableFlagFilePath,BlockDevInfoPath,sizeof(BlockDevInfoPath));
+                            strcat(BlockDevRemovableFlagFilePath,"/removeable");
+                            char BlockDevRemovableFlag;
+                            FILE* BlockDevRemovableFlagFile=fopen(BlockDevRemovableFlagFilePath,"r");
+                            fread(&BlockDevRemovableFlag,sizeof(char),1,BlockDevRemovableFlagFile);
+                            if (BlockDevRemovableFlag=='0') {
+                                printf("%s","Block Device Removable: No");
+                            } else {
+                                printf("%s","Block Device Removable: Yes");
+                            }
+                            fclose(BlockDevRemovableFlagFile);
+                            blkid_loff_t BlockDevRemovableSize=blkid_get_dev_size(fileno(BlockDevRemovableFlagFile));
+                            printf("Block Device Size: %u",BlockDevRemovableSize);
+                            char* BlockDevTypeFlagFilePath;
+                            memcpy(BlockDevTypeFlagFilePath,BlockDevInfoPath,sizeof(BlockDevInfoPath));
+                            FILE* BlockDevTypeFlagFile=fopen(BlockDevTypeFlagFilePath,"rb");
+                            uint8_t BlockDevTypeFlag;
+                            fread(&BlockDevTypeFlag,sizeof(char),1,BlockDevTypeFlagFile);
+                            switch (BlockDevTypeFlag) {
+                                case 0:
+                                    printf("%s","Block Device Type: Disk");
                                     break;
-                              }
-                        /* No pipe support*/
-                        case 4:
-                            {
+                                case 1:
+                                    printf("%s","Block Device Type: Tape Storage");
+                                    break;
+                                case 2:
+                                    printf("%s","Block Device Type: Printer");
+                                    break;
+                                case 3:
+                                    printf("%s","Block Device Type: HP Scanner Processor");
+                                    break;
+                                case 4:
+                                    printf("%s","Block Device Type: Write Once Read Many Memory");
+                                    break;
+                                case 5:
+                                    printf("%s","Block Device Type: Read Only Memory");
+                                    break;
+                                case 6:
+                                    printf("%s","Block Device Type: Scanner");
+                                    break;
+                                case 7:
+                                    printf("%s","Block Device Type: Magnetic Optical disk");
+                                    break;
+                                case 8:
+                                    printf("%s","Block Device Type: Medium Changer");
+                                    break;
+                                case 9:
+                                    printf("%s","Block Device Type: Communications Device");
+                                    break;
+                                case 0x0c:
+                                    printf("%s","Block Device Type: Raid");
+                                    break;
+                                case 0x0e:
+                                    printf("%s","Block Device Type: RBC");
+                                    break;
+                                case 0x7f:
+                                    printf("%s","Block Device Type: No Lun");
+                                    break;
+                                case default:
+                                    printf("%s","Block Device Type: Other");
+                            }
+                            FILE* MountListFile=fopen("/proc/mounts","r");
+                            char* MountListCharArr;
+                            struct stat MountListFileStats;
+                            stat("/proc/mounts",&MountListFileStats);
+                            size_t MountListSize=MountListFileStats.st_size;
+                            fread(MountListCharArr,sizeof(char),MountListSize,MountListFile);
+                            string MountListString=MountListCharArr;
+                            replace(MountListString.begin(),MountListString.end(),'\n','\0');
+                            char** MountList;
+                            memcpy(MountList,MountListString.c_str(),MountListSize);
+                            string MountTargetEntry;
+                            bool DeviceMounted;
+                            for (size_t i=0;i<sizeof(MountList);i++) {
+                                if (regex_match(MountList[i],regex(BlockDevName))) {
+                                    MountTargetEntry=MountList[i];
+                                    DeviceMounted=true;
+                                    printf("Block Device Mounted: Yes");
+                                    break;
+                                } else if (i+1==sizeof()) {
+                                    DeviceMounted=false;
+                                    printf("Block Device Mounted: No");
+                                }
+                            }
+                            if (DeviceMounted) {
+                                replace(MountTargetEntry.begin(),MountTargetEntry.end(),' ','\0');
+                                char** MountTargetEntryInfo;
+                                memcpy(MountTargetEntryInfo,MountTargetEntry.c_str(),MountTargetEntry.size());
+                                cout<<"Block Device Mount Point: "<<MountTargetEntryInfo[1]<<endl;
+                            }
+                            break;
+                        }
+                    case 3:
+                        {
+                                char* DeviceName;
+                                struct stat* PartitionsListStats=(struct stat*)malloc(144);
+                                stat("/proc/partitions",PartitionsListStats);
+                                FILE* PartitionListFile=fopen("/proc/partitions","r");
+                                size_t* PartitionListSize=(size_t*)malloc(8);
+                                *PartitionListSize=PartitionsListStats->st_size;
+                                free(PartitionsListStats);
+                                char* PartitionListCharArr=(char*)calloc(*PartitionListSize,sizeof(char));
+                                fread(PartitionListCharArr,sizeof(char),PartitionsListStats->st_size,PartitionListFile);
+                                string* PartitionListString=(string*)malloc(*PartitionListSize);
+                                replace((*PartitionListString).begin(),(*PartitionListString).end(),'\n','\0');
+                                char** PartitionListString=(char**)malloc(*PartitionListSize);
+                                memcpy(PartitionListString,(*PartitionListString).c_str(),(*PartitionListString).size());
+                                PartitionData* PartitionDataList=(PartitionData*)calloc(sizeof(PartitionListString),sizeof(PartitionData));
+                                free(PartitionListSize);
+                                free(PartitionListCharArr);
+                                free(PartitionListString);
+                                free(PartitionListString);
+                                dev_t* CharDevId=(dev_t*)malloc(8);
+                                for (size_t i=1;i<sizeof(PartitionListString);i++) {
+                                    string PartionListCurEntry=PartitionListString[i];
+                                    regex_replace(PartionListCurEntry,regex("(^\\s+)|(\\s+$)"),"");
+                                    char* PartionListCurEntryCharrArr;
+                                    memcpy(PartionListCurEntryCharrArr,PartionListCurEntry.c_str(),PartionListCurEntry.size());
+                                    PartitionDataList[i]=PartitionData(PartionListCurEntryCharrArr);
+                                }
+                                for (size_t i=0;sizeof(PartitionDataList);i++) {
+                                    if (PartitionDataList[i].DeviceMajor==MAJOR(CharDevId)&&PartitionDataList[i].DeviceMinor==MINOR(CharDevId)) {
+                                        DeviceName=PartitionDataList[i].Name;
+                                    }
+                                }
+                                printf("Character Device Name: %s",DeviceName);
+                                printf("Major Device Id: %u",MAJOR(CharDevId));
+                                printf("Minor Device Id: %u",MINOR(CharDevId));
                                 break;
                             }
-                        case 5:
-                            {
-                                char* LinkDest;
-                                readlink(File,LinkDest,analysisoffile.bytes);
-                                printf("Link Destination: %s",LinkDest);
-                                break;
-                            }
-                        case 6:
-                            {
-                                break;
-                            }
-                        case 7:
-                            printf("%s","Error: Invalid File Type");
-                    }
+                    /* No pipe support*/
+                    case 4:
+                        {
+                            break;
+                        }
+                    case 5:
+                        {
+                            char* LinkDest;
+                            readlink(File,LinkDest,analysisoffile.bytes);
+                            printf("Link Destination: %s",LinkDest);
+                            break;
+                        }
+                    case 6:
+                        {
+                            break;
+                        }
+                    case 7:
+                        printf("%s","Error: Invalid File Type");
                 }
             }
             return 0;
